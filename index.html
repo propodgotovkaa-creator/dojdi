@@ -1,1 +1,24 @@
-
+<!doctype html>
+<html lang="ru">
+<head>
+ <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#dce7d7"><meta name="description" content="После дождя — найди слова и помоги солнцу вернуться в город.">
+ <title>После дождя</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+ <main id="game" aria-label="Игра «После дождя»">
+  <section class="scene" aria-label="Город и погода">
+   <canvas id="city" width="1280" height="526" role="img" aria-label="Дождливый город. Правильные ответы приближают солнце."></canvas>
+   <div class="scene-tools"><button id="sound" class="tool" type="button" aria-label="Выключить звук" aria-pressed="true">Звук: вкл.</button><button id="pause" class="tool" type="button" aria-pressed="false">Пауза</button></div>
+   <div class="next-wrap" hidden><button id="next" type="button">ДАЛЬШЕ <span aria-hidden="true">→</span></button></div>
+   <div id="error" role="alert" hidden>Не удалось загрузить изображения. <button type="button" onclick="location.reload()">Повторить</button></div>
+  </section>
+  <section class="panel" aria-labelledby="task">
+   <div class="panel-heading"><h1 id="task">НАЙДИ ВСЕХ ЖИВОТНЫХ</h1><span id="count" aria-live="polite">Найдено 0 из 5</span></div>
+   <div id="words" aria-label="Слова для выбора"></div>
+   <p id="feedback" class="sr-only" aria-live="polite"></p>
+  </section>
+ </main>
+ <script type="module" src="js/game.js"></script>
+</body>
+</html>

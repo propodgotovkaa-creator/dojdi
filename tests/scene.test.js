@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createScene} from '../js/scene.js';
-import {drawGait} from '../js/gait.js';
+import {sampleWalk,CYCLE,GROUND} from '../js/gait.js';
 const context=()=>new Proxy({createRadialGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>(o[k]=v,true)});
 globalThis.document={createElement:()=>({getContext:()=>context()})};
-const img={complete:true,naturalWidth:1774,naturalHeight:887};
-const images=Object.fromEntries(['city','clouds','car','bus','man','woman','womanEnd','manRig','womanRig'].map(k=>[k,img]));
+const img={complete:true,naturalWidth:1536,naturalHeight:1024};
+const images=Object.fromEntries(['city','clouds','car','bus','heroParts'].map(k=>[k,img]));
 test('rounds alternate one character; every finale completes and reset restores rain',()=>{const scene=createScene({getContext:()=>context()},images);for(let round=0;round<11;round++){scene.reset(round);assert.equal(scene.activeCharacter,round%2?'man':'woman');assert.equal(scene.finished,false);scene.progress(5,5);for(let t=0;t<900;t++)scene.draw(1/60);assert.equal(scene.finished,true);assert.equal(scene.intensity,0);}scene.reset();for(let t=0;t<900;t++)scene.draw(1/60);assert.equal(scene.intensity,1);});
-test('shoe sole lies on ground during stance, independently of calf angle',()=>{for(const kind of ['woman','man']){let shoeDraws=[];const ctx=context();ctx.drawImage=(...args)=>{if(args.length===9&&[66,73,120,130].includes(args[4]))shoeDraws.push(args);};drawGait(ctx,{kind,walk:0,v:30},images);assert.equal(shoeDraws.length,2);for(const a of shoeDraws){assert.ok(Math.abs(a[6]+a[8]-205)<.001);}}});
+test('captured walk stays finite and soles do not pass through the pavement',()=>{for(let t=0;t<CYCLE;t+=.002){const joints=sampleWalk(t);for(const j of Object.values(joints)){assert.ok(Number.isFinite(j.x)&&Number.isFinite(j.y));}const soles=['Left','Right'].flatMap(side=>{const f=joints[side+'Foot'];return [-5,13].map(x=>f.y+x*Math.sin(f.angle)+6*Math.cos(f.angle));});assert.ok(Math.abs(Math.max(...soles)-GROUND)<1e-6);}});
+test('captured cycle loops continuously at all joints',()=>{const a=sampleWalk(CYCLE-1e-7),b=sampleWalk(1e-7);for(const name of Object.keys(a)){assert.ok(Math.hypot(a[name].x-b[name].x,a[name].y-b[name].y)<.001);}});
+test('walking contains a planted foot and an airborne recovery foot',()=>{const j=sampleWalk(CYCLE*.25);assert.ok(j.LeftFoot.y<j.RightFoot.y-10);assert.ok(j.LeftLeg.x>j.LeftFoot.x+20);assert.ok(Math.abs(j.RightLeg.x-j.RightFoot.x)<15);});

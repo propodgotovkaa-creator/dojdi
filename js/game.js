@@ -1,5 +1,5 @@
 import {rounds,shuffle,selectWord} from './rounds.js';
-import {createScene} from './scene.js';
+import {createScene} from './scene.js?v=7';
 import {GameAudio} from './audio.js';
 
 const game=document.getElementById('game'),canvas=document.getElementById('city'),words=document.getElementById('words'),title=document.getElementById('task'),count=document.getElementById('count'),feedback=document.getElementById('feedback'),next=document.getElementById('next'),nextWrap=next.parentElement,pauseButton=document.getElementById('pause'),sound=document.getElementById('sound');
@@ -31,7 +31,7 @@ function choose(word,button){
  button.setAttribute('aria-pressed','true');count.textContent=`Найдено ${found.size} из 5`;feedback.textContent=`Верно: ${word.toLowerCase()}.`;audio.play('correct');scene.progress(found.size,5);
 }
 next.onclick=()=>{if(next.disabled)return;roundIndex=(roundIndex+1)%rounds.length;startRound();words.querySelector('button')?.focus({preventScroll:true});};
-const assets={city:'city.webp',clouds:'storm-clouds.webp',car:'car-animation-parts.webp',bus:'bus-animation-parts.webp',man:'man-walk-finale.webp',woman:'woman-walk-gentle.webp',womanEnd:'woman-sun-finale.webp',womanRig:'woman-rig.webp',manRig:'man-rig.webp'};
+const assets={city:'city.webp',clouds:'storm-clouds.webp',car:'car-animation-parts.webp',bus:'bus-animation-parts.webp',heroParts:'heroes-v2.png',heroHood:'heroes-hood-v2.png'};
 async function loadImages(){const entries=await Promise.all(Object.entries(assets).map(([name,file])=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve([name,image]);image.onerror=()=>reject(new Error(file));image.src=`assets/images/${file}`;})));return Object.fromEntries(entries);}
 startRound();
 loadImages().then(images=>{scene=createScene(canvas,images);ready=true;words.querySelectorAll('button').forEach(b=>b.disabled=false);requestAnimationFrame(tick);}).catch(()=>{document.getElementById('error').hidden=false;});

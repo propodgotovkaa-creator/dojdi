@@ -1,46 +1,27 @@
-import {drawGait} from './gait.js';
+import {drawGait} from './gait.js?v=7';
 // Approved scene assets; all movement is time-based and frame-rate independent.
 export function createScene(canvas, images){
 const ctx=canvas.getContext('2d'),W=1280,H=526;
-const {city:bg,clouds:cloudArt,car:carArt,bus:busArt,man:walker,woman:womanArt,womanEnd}=images;
+const {city:bg,clouds:cloudArt,car:carArt,bus:busArt,heroParts}=images;
 let wet=1,target=1,elapsed=0,completed=false,celebration=0,activeKind='woman',lastRound=false;
 const drops=Array.from({length:1150},(_,i)=>({x:Math.random()*W,y:Math.random()*H,z:i%3,threshold:Math.random(),speed:560+Math.random()*460,len:12+Math.random()*24}));
 let rings=[],spawn=0;
-const people=[{kind:'woman',x:140,walk:0,v:30,end:-1,hood:-1,pose:0},{kind:'man',x:690,walk:0,v:34,end:-1,hood:-1,pose:0}];
+const people=[{kind:'woman',x:140,walk:0,v:96,end:-1,hood:-1,pose:0},{kind:'man',x:690,walk:0,v:104,end:-1,hood:-1,pose:0}];
 const scratch=document.createElement('canvas');scratch.width=230;scratch.height=220;const sc=scratch.getContext('2d');
-const headX=[239,213,207,191,240,211,216,204,222,215,195,179],footY=[347,346,347,346,338,334,338,338,349,349,349,349];
-function pose(person,index,alpha){
- sc.globalAlpha=alpha;
- if(person.kind==='man'){
- const row=Math.floor(index/4),sy=[0,362,710][row],sh=[355,347,376][row],scale=.415;
- sc.drawImage(walker,(index%4)*362,sy,362,sh,108-headX[index]*scale,205-footY[index]*scale,362*scale,sh*scale);
- }else{
- const isFinal=index>=8,frame=isFinal?index-8:index,img=isFinal?womanEnd:womanArt,sw=img.naturalWidth/4,sh=img.naturalHeight/2,scale=.435;
- // Match sole position between the standing and walking sheets.
- const sole=isFinal?(frame<4?438:414):(frame<4?430:426);
- sc.drawImage(img,(frame%4)*sw,Math.floor(frame/4)*sh,sw,sh,8,205-sole*scale,sw*scale,sh*scale);
- }
-}
-function blend(p,a,b,mix){sc.clearRect(0,0,230,220);sc.globalCompositeOperation='source-over';if(a<8){sc.globalAlpha=1-mix;drawGait(sc,p,images);}else pose(p,a,1-mix);if(mix>0){sc.globalCompositeOperation='lighter';pose(p,b,mix);}sc.globalAlpha=1;sc.globalCompositeOperation='source-over';ctx.drawImage(scratch,p.x,H*.825-205);}
-const smooth=x=>x*x*(3-2*x);
 function drawPeople(dt){
  for(const p of people){
- if(p.kind!==activeKind)continue;
- if(p.end<0&&completed){p.end=0;p.pose=Math.floor(p.walk*8)%8;p.hood=-1;}
- if(p.end>=0){
- const old=p.end;p.end+=dt;const braking=.65;
- if(old<braking)p.x+=p.v*dt*Math.max(0,1-p.end/braking);
- if(p.end<braking){blend(p,p.pose,8,smooth(p.end/braking));continue;}
- if(p.hood<0&&wet<=.08)p.hood=0;
- if(p.hood>=0)p.hood+=dt;
- const maximum=p.kind==='man'?3:7,step=p.kind==='man'?.58:.34;
- const phase=p.hood<0?0:Math.min(maximum,p.hood/step),i=Math.floor(phase),f=phase-i;
- blend(p,8+i,8+Math.min(maximum,i+1),smooth(f));
- }else{
- p.walk+=dt;p.x+=p.v*dt;
- if(p.x>W+5)p.x=-165;
- const phase=p.walk*8,i=Math.floor(phase)%8,f=phase-Math.floor(phase);sc.clearRect(0,0,230,220);sc.globalCompositeOperation='source-over';sc.globalAlpha=1;drawGait(sc,p,images);ctx.drawImage(scratch,p.x,H*.825-205);
- }
+  if(p.kind!==activeKind)continue;
+  if(p.end<0&&completed){p.end=0;p.hood=-1;}
+  if(p.end>=0){
+   p.end+=dt;
+   const t=Math.min(1,p.end/.7);
+   p.motion=1-t*t*(3-2*t);
+   p.walk+=dt*p.motion;p.x+=p.v*dt*p.motion;
+   if(p.hood<0&&wet<=.08)p.hood=0;
+   if(p.hood>=0)p.hood+=dt;
+  }else{p.motion=1;p.walk+=dt;p.x+=p.v*dt;if(p.x>W+5)p.x=-165;}
+  sc.clearRect(0,0,230,220);sc.globalAlpha=1;sc.globalCompositeOperation='source-over';
+  drawGait(sc,p,images);ctx.drawImage(scratch,p.x,H*.825-205);
  }
 }
 function draw(dt){
@@ -106,7 +87,7 @@ if(lastRound&&completed&&wet<.08){
 return {
  draw,
  progress(found,total){target=1-found/total;if(found===total)completed=true;},
- reset(round=0){activeKind=round%2?'man':'woman';lastRound=round===10;completed=false;celebration=0;target=1;for(const p of people){p.x=300;p.end=-1;p.hood=-1;p.walk=0;}},
+ reset(round=0){activeKind=round%2?'man':'woman';lastRound=round===10;completed=false;celebration=0;target=1;for(const p of people){p.x=300;p.end=-1;p.hood=-1;p.walk=0;p.motion=1;}},
  get activeCharacter(){return activeKind;},
  get intensity(){return wet;},
  get finished(){return completed&&wet<.015&&people.filter(p=>p.kind===activeKind).every(p=>p.hood>=(p.kind==='man'?1.74:2.38))&&celebration>4;}

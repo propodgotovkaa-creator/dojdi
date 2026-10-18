@@ -7,7 +7,7 @@ let wet=1,target=1,elapsed=0,completed=false,celebration=0,activeKind='woman',la
 const drops=Array.from({length:1150},(_,i)=>({x:Math.random()*W,y:Math.random()*H,z:i%3,threshold:Math.random(),speed:560+Math.random()*460,len:12+Math.random()*24}));
 let rings=[],spawn=0;
 const people=[{kind:'woman',x:140,walk:0,v:96,end:-1,hood:-1,pose:0},{kind:'man',x:690,walk:0,v:104,end:-1,hood:-1,pose:0}];
-const scratch=document.createElement('canvas');scratch.width=230;scratch.height=220;const sc=scratch.getContext('2d');
+// Draw heroes directly into the high-density scene: no low-resolution intermediate.
 function drawPeople(dt){
  for(const p of people){
   if(p.kind!==activeKind)continue;
@@ -20,8 +20,7 @@ function drawPeople(dt){
    if(p.hood<0&&wet<=.08)p.hood=0;
    if(p.hood>=0)p.hood+=dt;
   }else{p.motion=1;p.walk+=dt;p.x+=p.v*dt;if(p.x>W+5)p.x=-165;}
-  sc.clearRect(0,0,230,220);sc.globalAlpha=1;sc.globalCompositeOperation='source-over';
-  drawGait(sc,p,images);ctx.drawImage(scratch,p.x,H*.825-205);
+  ctx.save();ctx.translate(p.x,H*.825-205);drawGait(ctx,p,images);ctx.restore();
  }
 }
 function draw(dt){

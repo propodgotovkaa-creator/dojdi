@@ -3,21 +3,36 @@
 <head>
  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
  <meta name="theme-color" content="#dce7d7"><meta name="description" content="После дождя — найди слова и помоги солнцу вернуться в город.">
- <title>После дождя</title><link rel="stylesheet" href="styles.css?v=12">
+ <title>После дождя</title><link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
  <main id="game" aria-label="Игра «После дождя»">
-  <section class="scene" aria-label="Город и погода">
+  <section inert class="scene" aria-label="Город и погода">
    <canvas id="city" width="1280" height="526" role="img" aria-label="Дождливый город. Правильные ответы приближают солнце."></canvas>
    <div class="next-wrap" hidden><button id="next" type="button">ДАЛЬШЕ <span aria-hidden="true">→</span></button></div>
    <div id="error" role="alert" hidden>Не удалось загрузить изображения. <button type="button" onclick="location.reload()">Повторить</button></div>
   </section>
-  <section class="panel" aria-labelledby="task">
+  <section inert class="panel" aria-labelledby="task">
    <div class="panel-heading"><h1 id="task">НАЙДИ ВСЕХ ЖИВОТНЫХ</h1><span id="count" aria-live="polite">Найдено 0 из 5</span></div>
    <div id="words" aria-label="Слова для выбора"></div>
    <p id="feedback" class="sr-only" aria-live="polite"></p>
   </section>
+  <div id="rules" class="rules-overlay" role="dialog" aria-modal="true" aria-labelledby="rules-title" aria-describedby="rules-intro">
+   <div class="rules-card">
+    <p class="rules-eyebrow">ПОСЛЕ ДОЖДЯ</p>
+    <h2 id="rules-title">Помоги солнцу вернуться!</h2>
+    <p id="rules-intro">Найди нужные слова — и дождь постепенно закончится.</p>
+    <ol class="rules-list">
+     <li>Прочитай задание над карточками.</li>
+     <li>Выбери <strong>5 слов</strong>, которые подходят к заданию.</li>
+     <li>Каждый верный ответ делает дождь слабее. Если ошибёшься — просто попробуй другое слово.</li>
+     <li>Когда найдёшь все слова, дождись солнца и нажми <strong>«Дальше»</strong> в небе.</li>
+    </ol>
+    <p class="rules-note">Не торопись: ограничения по времени нет.</p>
+    <button id="start-game" type="button">НАЧАТЬ ИГРУ <span aria-hidden="true">→</span></button>
+   </div>
+  </div>
  </main>
- <script type="module" src="js/game.js?v=12"></script>
+ <script type="module" src="js/game.js?v=13"></script>
 </body>
 </html>

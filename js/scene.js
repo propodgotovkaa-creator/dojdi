@@ -1,10 +1,23 @@
-import {trafficAt} from './traffic.js';
+import {trafficAt} from './traffic.js?v=12';
 import {drawGait} from './gait.js?v=11';
 // Approved scene assets; all movement is time-based and frame-rate independent.
 export function createScene(canvas, images){
 const ctx=canvas.getContext('2d'),W=1280,H=526,characterScale=.88;
 const {city:bg,clouds:cloudArt,car:carArt,taxi:taxiArt,bus:busArt,heroParts}=images;
-let wet=1,target=1,elapsed=0,completed=false,celebration=0,activeKind='woman',lastRound=false;
+let wet=1,target=1,elapsed=0,completed=false,celebration=0,activeKind='woman',lastRound=false,currentRound=0,trafficElapsed=0;
+// Feather the cloud groups at source resolution, avoiding rectangular cut edges.
+const cloudGroups=[0,1].map(side=>{
+ const layer=document.createElement('canvas');
+ layer.width=cloudArt.naturalWidth;layer.height=cloudArt.naturalHeight;
+ const brush=layer.getContext('2d');
+ brush.drawImage(cloudArt,0,0);
+ brush.globalCompositeOperation='destination-in';
+ const mask=brush.createLinearGradient(layer.width*.30,0,layer.width*.70,0);
+ mask.addColorStop(0,side?'transparent':'#fff');
+ mask.addColorStop(1,side?'#fff':'transparent');
+ brush.fillStyle=mask;brush.fillRect(0,0,layer.width,layer.height);
+ return layer;
+});
 const drops=Array.from({length:1150},(_,i)=>({x:Math.random()*W,y:Math.random()*H,z:i%3,threshold:Math.random(),speed:560+Math.random()*460,len:12+Math.random()*24}));
 let rings=[],spawn=0;
 const people=[{kind:'woman',x:140,walk:0,v:96,end:-1,hood:-1,pose:0},{kind:'man',x:690,walk:0,v:104,end:-1,hood:-1,pose:0}];
@@ -25,7 +38,7 @@ function drawPeople(dt){
  }
 }
 function draw(dt){
- elapsed+=dt;wet+=(target-wet)*(1-Math.exp(-dt/1.8));if(Math.abs(target-wet)<.003)wet=target;
+ elapsed+=dt;trafficElapsed+=dt;wet+=(target-wet)*(1-Math.exp(-dt/1.8));if(Math.abs(target-wet)<.003)wet=target;
  if(completed)celebration+=dt;
 ctx.clearRect(0,0,W,H);if(bg.complete&&bg.naturalWidth)ctx.drawImage(bg,0,0,W,H);else{ctx.fillStyle='#a5c8d8';ctx.fillRect(0,0,W,H);}
 ctx.fillStyle='rgba(39,57,77,'+(wet*.46)+')';ctx.fillRect(0,0,W,H);
@@ -36,14 +49,14 @@ ctx.save();ctx.globalAlpha=.18+wet*.38;ctx.drawImage(cloudArt,-60+Math.sin(elaps
 for(let side=0;side<2;side++){
 ctx.save();ctx.globalAlpha=.65+wet*.35;
 const drift=(side===0?-1:1)*spread+Math.sin(elapsed*.08+side)*9;
-ctx.translate(drift,0);ctx.beginPath();ctx.rect(side*W/2,-300,W/2,700);ctx.clip();
-ctx.drawImage(cloudArt,0,-105,W,380);ctx.restore();
+ctx.translate(drift,0);
+ctx.drawImage(cloudGroups[side],0,-105,W,380);ctx.restore();
 }}
 
 ctx.fillStyle='rgba(222,233,230,'+(wet*.13)+')';ctx.fillRect(0,180,W,420);
 
 drawPeople(dt);
-const traffic=trafficAt(elapsed),trafficTime=traffic.time;
+const traffic=trafficAt(trafficElapsed,currentRound),trafficTime=traffic.time;
 const vehicleArt=traffic.kind==='taxi'?taxiArt:carArt;
 if(traffic.kind!=='bus'&&vehicleArt?.complete&&vehicleArt.naturalWidth){
 const scale=.16,velocity=168,cx=trafficTime*velocity-340,ground=H*.955,cy=ground-740*scale;
@@ -88,7 +101,7 @@ if(lastRound&&completed&&wet<.08){
 return {
  draw,
  progress(found,total){target=1-found/total;if(found===total)completed=true;},
- reset(round=0){activeKind=round%2?'man':'woman';lastRound=round===10;completed=false;celebration=0;target=1;for(const p of people){p.x=300;p.end=-1;p.hood=-1;p.walk=0;p.motion=1;}},
+ reset(round=0){currentRound=round;trafficElapsed=0;activeKind=round%2?'man':'woman';lastRound=round===10;completed=false;celebration=0;target=1;for(const p of people){p.x=300;p.end=-1;p.hood=-1;p.walk=0;p.motion=1;}},
  get activeCharacter(){return activeKind;},
  get intensity(){return wet;},
  get finished(){return completed&&wet<.015&&people.filter(p=>p.kind===activeKind).every(p=>p.hood>=(p.kind==='man'?1.74:2.38))&&celebration>4;}

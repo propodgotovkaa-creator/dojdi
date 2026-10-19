@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createScene} from '../js/scene.js';
 import {sampleWalk,CYCLE,GROUND} from '../js/gait.js';
-const context=()=>new Proxy({createRadialGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>(o[k]=v,true)});
+const context=()=>new Proxy({createRadialGradient:()=>({addColorStop(){}}),createLinearGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>(o[k]=v,true)});
 globalThis.document={createElement:()=>({getContext:()=>context()})};
 const img={complete:true,naturalWidth:1536,naturalHeight:1024};
 const images=Object.fromEntries(['city','clouds','car','bus','heroParts'].map(k=>[k,img]));

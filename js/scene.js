@@ -1,8 +1,9 @@
-import {drawGait} from './gait.js?v=7';
+import {trafficAt} from './traffic.js';
+import {drawGait} from './gait.js?v=11';
 // Approved scene assets; all movement is time-based and frame-rate independent.
 export function createScene(canvas, images){
-const ctx=canvas.getContext('2d'),W=1280,H=526;
-const {city:bg,clouds:cloudArt,car:carArt,bus:busArt,heroParts}=images;
+const ctx=canvas.getContext('2d'),W=1280,H=526,characterScale=.88;
+const {city:bg,clouds:cloudArt,car:carArt,taxi:taxiArt,bus:busArt,heroParts}=images;
 let wet=1,target=1,elapsed=0,completed=false,celebration=0,activeKind='woman',lastRound=false;
 const drops=Array.from({length:1150},(_,i)=>({x:Math.random()*W,y:Math.random()*H,z:i%3,threshold:Math.random(),speed:560+Math.random()*460,len:12+Math.random()*24}));
 let rings=[],spawn=0;
@@ -16,11 +17,11 @@ function drawPeople(dt){
    p.end+=dt;
    const t=Math.min(1,p.end/.7);
    p.motion=1-t*t*(3-2*t);
-   p.walk+=dt*p.motion;p.x+=p.v*dt*p.motion;
+   p.walk+=dt*p.motion;p.x+=p.v*dt*p.motion*characterScale;
    if(p.hood<0&&wet<=.08)p.hood=0;
    if(p.hood>=0)p.hood+=dt;
-  }else{p.motion=1;p.walk+=dt;p.x+=p.v*dt;if(p.x>W+5)p.x=-165;}
-  ctx.save();ctx.translate(p.x,H*.825-205);drawGait(ctx,p,images);ctx.restore();
+  }else{p.motion=1;p.walk+=dt;p.x+=p.v*dt*characterScale;if(p.x>W+5)p.x=-165;}
+  ctx.save();ctx.translate(p.x+108,H*.825);ctx.scale(characterScale,characterScale);ctx.translate(-108,-205);drawGait(ctx,p,images);ctx.restore();
  }
 }
 function draw(dt){
@@ -42,21 +43,22 @@ ctx.drawImage(cloudArt,0,-105,W,380);ctx.restore();
 ctx.fillStyle='rgba(222,233,230,'+(wet*.13)+')';ctx.fillRect(0,180,W,420);
 
 drawPeople(dt);
-const trafficTime=(elapsed+3)%24;
-if(carArt.complete&&carArt.naturalWidth&&trafficTime>=13){
-const scale=.16,velocity=168,cx=(trafficTime-13)*velocity-340,ground=H*.955,cy=ground-740*scale;
+const traffic=trafficAt(elapsed),trafficTime=traffic.time;
+const vehicleArt=traffic.kind==='taxi'?taxiArt:carArt;
+if(traffic.kind!=='bus'&&vehicleArt?.complete&&vehicleArt.naturalWidth){
+const scale=.16,velocity=168,cx=trafficTime*velocity-340,ground=H*.955,cy=ground-740*scale;
 const wheelY=cy+580*scale,rad=160*scale;
 ctx.save();ctx.fillStyle='rgba(30,43,49,.18)';ctx.beginPath();ctx.ellipse(cx+770*scale,ground-2,140,7,0,0,7);ctx.fill();ctx.restore();
 for(const wx of [335,1260]){
-ctx.save();ctx.translate(cx+wx*scale,wheelY);ctx.rotate(elapsed*velocity/rad);ctx.beginPath();ctx.arc(0,0,rad,0,7);ctx.clip();ctx.drawImage(carArt,607,666,322,326,-rad,-rad,rad*2,rad*2);ctx.restore();
+ctx.save();ctx.translate(cx+wx*scale,wheelY);ctx.rotate(elapsed*velocity/rad);ctx.beginPath();ctx.arc(0,0,rad,0,7);ctx.clip();ctx.drawImage(vehicleArt,607,666,322,326,-rad,-rad,rad*2,rad*2);ctx.restore();
 }
-ctx.save();ctx.translate(cx,cy+Math.sin(elapsed*7)*.8+Math.sin(elapsed*11)*.3);ctx.drawImage(carArt,0,0,1536,640,0,0,1536*scale,640*scale);ctx.restore();
+ctx.save();ctx.translate(cx,cy+Math.sin(elapsed*7)*.8+Math.sin(elapsed*11)*.3);ctx.drawImage(vehicleArt,0,0,1536,640,0,0,1536*scale,640*scale);ctx.restore();
 for(const wx of [335,1260]){for(let j=0;j<13;j++){
 const life=(elapsed*2.8+j/13)%1,back=life*(18+(j%4)*9),height=Math.sin(life*Math.PI)*(6+j%5*3);
 ctx.fillStyle='rgba(205,230,238,'+((1-life)*(.22+wet*.4))+')';ctx.beginPath();ctx.ellipse(cx+wx*scale-back,ground-height,1.3+(j%3)*.4,.7+(j%2)*.4,life,0,7);ctx.fill();
 }}
 }
-if(busArt.complete&&busArt.naturalWidth&&trafficTime<13){
+if(busArt.complete&&busArt.naturalWidth&&traffic.kind==='bus'){
 const scale=.195,velocity=140,cx=W+35-trafficTime*velocity,ground=H*.945,cy=ground-790*scale,rad=138*scale;
 ctx.save();ctx.fillStyle='rgba(30,43,49,.15)';ctx.beginPath();ctx.ellipse(cx+768*scale,ground-2,185,7,0,0,7);ctx.fill();ctx.restore();
 for(const wx of [376,1157]){

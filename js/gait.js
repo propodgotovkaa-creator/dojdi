@@ -1,3 +1,4 @@
+import {hoodMotion} from './hood-motion.js';
 import {WALK_DURATION,WALK_SPEED,JOINTS,WALK_FRAMES} from './walk-data.js';
 export const CYCLE=WALK_DURATION,GROUND=205;
 const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
@@ -16,6 +17,7 @@ export function sampleWalk(time){
 }
 export function drawGait(ctx,p,images){
  const female=p.kind==='woman',motion=p.motion??1,reaction=smooth((p.hood??-1)/1.7);
+ const hood=hoodMotion(p.hood??-1);
  const joints=sampleWalk(p.walk*(p.v/WALK_SPEED));
  const rest={LeftUpLeg:[105,122],LeftLeg:[105,160],LeftFoot:[103,199],RightUpLeg:[111,122],RightLeg:[113,160],RightFoot:[114,199],LeftArm:[103,85],LeftForeArm:[101,110],LeftHand:[105,132],RightArm:[110,85],RightForeArm:[112,110],RightHand:[117,132]};
  for(const [name,xy] of Object.entries(rest)){const j=joints[name];j.x=mix(xy[0],j.x,motion);j.y=mix(xy[1],j.y,motion);if('angle'in j)j.angle*=motion;}
@@ -37,7 +39,12 @@ export function drawGait(ctx,p,images){
   const sx=107+bodyX+(back?-3:0),sy=87+bob;
   let ex=sx+elbow.x-shoulder.x,ey=sy+elbow.y-shoulder.y,hx=sx+hand.x-shoulder.x,hy=sy+hand.y-shoulder.y;
   if(female&&!back){ex=sx+8;ey=sy+24;hx=134+bodyX;hy=106+bob;}
-  if(!back&&!female){const gesture=Math.sin(Math.PI*reaction);ex=mix(ex,135+bodyX,gesture);ey=mix(ey,102+bob,gesture);hx=mix(hx,120+bodyX,gesture);hy=mix(hy,55+bob,gesture);}
+  if(!back&&!female&&p.hood>=0){
+   hx=hood.hand.x+bodyX;hy=hood.hand.y+bob;
+   const dx=hx-sx,dy=hy-sy,d=Math.max(.01,Math.min(48.99,Math.hypot(dx,dy)));
+   const angle=Math.atan2(dy,dx)+Math.acos(Math.max(-1,Math.min(1,(25*25+d*d-24*24)/(50*d))));
+   ex=sx+25*Math.cos(angle);ey=sy+25*Math.sin(angle);
+  }
   stroke([[sx,sy],[ex,ey]],back?coatDark:coat,12);stroke([[ex,ey],[hx,hy]],back?coatDark:coat,10);
   stroke([[hx,hy],[hx+1,hy+4]],skin,7);
  }
@@ -48,15 +55,19 @@ export function drawGait(ctx,p,images){
  // Source rectangles are the four isolated, newly drawn puppet parts.
  const parts=female?{head:[206,41,422,432],body:[1002,12,268,487]}:{head:[233,542,376,424],body:[1004,512,279,505]};
  function body(image,alpha){ctx.save();ctx.globalAlpha*=alpha;ctx.drawImage(image,...parts.body,90+bodyX,74+bob,39,female?68:58);ctx.restore();}
- function head(image,alpha){ctx.save();ctx.globalAlpha*=alpha;ctx.translate(111+bodyX,77+bob);ctx.rotate(-reaction*.10);
+ function head(image,alpha){ctx.save();ctx.globalAlpha*=alpha;ctx.translate(111+bodyX,77+bob);ctx.rotate(female?-reaction*.10:0);
   if(female)ctx.drawImage(image,...parts.head,-23,-40,38,42);
   else ctx.drawImage(image,200,512,440,475,-26.34,-42.97,44.47,47.05);
   ctx.restore();
  }
  if(female){body(art,1);head(art,1);}else{
-  const reveal=smooth((reaction-.25)/.5),rainArt=images.heroHood||art;
-  // Align both drawings in the same atlas coordinates to avoid head-size changes.
-  body(rainArt,1-reveal);body(art,reveal);head(rainArt,1-reveal);head(art,reveal);
+  const rainArt=images.heroHood||art;
+  const settle=smooth(((p.hood??-1)-1.1)/.4);
+  body(rainArt,1-settle);body(art,settle);head(art,1);
+  if(images.hoodOnly){
+   ctx.save();ctx.globalAlpha*=1-settle;ctx.translate(111+bodyX+hood.dx,77+bob+hood.dy);ctx.rotate(hood.angle);ctx.scale(1,hood.scaleY);
+   ctx.drawImage(images.hoodOnly,200,512,440,475,-26.34,-42.97,44.47,47.05);ctx.restore();
+  }
  }
  arm(false);
  if(female){

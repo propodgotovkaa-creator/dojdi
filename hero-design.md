@@ -15,3 +15,9 @@ Keep the same four parts and positions. Remove glowing halos and shadows outside
 ## Правка капюшона (встроенный imagegen)
 
 Атлас heroes-hood-v2.png: мужская голова с прилегающим капюшоном, соответствующим куртке, при сохранении лица, размера и расположения. На мужском торсе убран опущенный капюшон. Женские части оставлены без изменений. Капюшон и исходная голова совмещены по координатам атласа.
+
+## Отдельная ткань капюшона
+
+Встроенный imagegen, исходник heroes-hood-v2.png, результат assets/images/hood-fabric.png. Голова остаётся отдельным неизменным рисунком. Рука сначала достигает края ткани, отводит его назад, затем опускается; капюшон остаётся сложенным за шеей.
+
+Запрос: Edit this exact transparent 1536x1024 animation atlas. Change ONLY the bottom-left object: remove all of the man's face, skin, neck, hair and head from inside the blue hood, replacing those pixels with full transparency. Leave ONLY the blue hood fabric as a standalone hollow clothing cutout in precisely the same position, shape, size and texture. The opening formerly occupied by face/hair must be transparent, not filled with blue cloth or shadow. Keep hood rim, crown, back and neck fabric exactly as drawn. All other three objects stay completely unchanged. True transparent alpha outside silhouettes and inside the hood opening. No new objects, no repositioning.
